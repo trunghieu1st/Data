@@ -1,0 +1,150 @@
+--- Global.asxs
+GlobalConfiguration.Configuration.Formatters.JsonFormatter.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+GlobalConfiguration.Configuration.Formatters.Remove(GlobalConfiguration.Configuration.Formatters.XmlFormatter);
+
+------------------------------------------------------------------------- 
+private void Form1_Load(object sender, EventArgs e)
+{
+    HienThi();
+}
+---------------- HIEN THI
+private void HienThi()
+{
+    string link = "http://localhost/truonghoc/api/default/all";
+    HttpWebRequest req = HttpWebRequest.CreateHttp(link);
+    WebResponse res = req.GetResponse();
+    DataContractJsonSerializer js = new DataContractJsonSerializer(typeof(Sinhvien[]));
+    object data = js.ReadObject(res.GetResponseStream());
+    Sinhvien[] danhsach = (Sinhvien[])data;
+    dataGridView1.DataSource = danhsach;
+    HienThiLopHoc();
+}
+
+private void HienThiLopHoc()
+{
+    string link = "http://localhost/truonghoc/api/default/all/lophoc";
+    HttpWebRequest req = HttpWebRequest.CreateHttp(link);
+    WebResponse res = req.GetResponse();
+    DataContractJsonSerializer js = new DataContractJsonSerializer(typeof(Lophoc[]));
+    object data = js.ReadObject(res.GetResponseStream());
+    Lophoc[] danhsach = (Lophoc[])data;
+    cboLophoc.DataSource = danhsach;
+    cboLophoc.ValueMember = "malop";
+    cboLophoc.DisplayMember = "tenlop";
+}
+
+private void btnDanhsach_Click(object sender, EventArgs e)
+{
+    HienThi();
+}
+
+private void btnDong_Click(object sender, EventArgs e)
+{
+    Close();
+}
+
+------------------- TÌM
+private void btnTim_Click(object sender, EventArgs e)
+{
+    if (cboLophoc.SelectedValue.ToString() == "")
+    {
+        MessageBox.Show("Mã lớp trống", "Thông báo");
+    }
+    else
+    {
+        string str = string.Format("?maLop={0}", cboLophoc.SelectedValue.ToString());
+        string link = "http://localhost/truonghoc/api/default/allByMaLop" + str;
+        HttpWebRequest req = HttpWebRequest.CreateHttp(link);
+        WebResponse res = req.GetResponse();
+        DataContractJsonSerializer js = new DataContractJsonSerializer(typeof(Sinhvien[]));
+        object data = js.ReadObject(res.GetResponseStream());
+        Sinhvien[] danhsach = (Sinhvien[])data;
+        dataGridView1.DataSource = danhsach;
+    }
+}
+
+---------------- CELL CLICK
+private void cellClick(object sender, DataGridViewCellEventArgs e)
+{
+    Sinhvien s = (Sinhvien)dataGridView1.CurrentRow.DataBoundItem;
+    txtmasv.Text = s.masv.ToString();
+    txthoten.Text = s.hoten;
+    txtdiachi.Text = s.diachi;
+    txtdienthoai.Text = s.dienthoai;
+    /*txtmalop.Text = s.malop.ToString();*/
+    cboLophoc.SelectedValue = s.malop;
+    txtanh.Text = s.anh;
+    }
+
+-------------------- THÊM
+private void btnThem_Click(object sender, EventArgs e)
+{
+    string link = "http://localhost/truonghoc/api/default/add";
+    var client = new WebClient();
+    var sv = new NameValueCollection();
+    sv["hoten"] = txthoten.Text;
+    sv["diachi"] = txtdiachi.Text;
+    sv["dienthoai"] = txtdienthoai.Text;
+    /*sv["malop"] = txtmalop.Text;*/
+    sv["malop"] = cboLophoc.SelectedValue.ToString();
+    sv["anh"] = txtanh.Text;
+    var response = client.UploadValues(link, sv);
+    String msg = Encoding.UTF8.GetString(response);
+    MessageBox.Show("Kết quả thêm: " + msg);
+    HienThi();
+}
+
+-------------------- SỬA
+private void btnCapnhat_Click(object sender, EventArgs e)
+{
+    string link = "http://localhost/truonghoc/api/default/update";
+    var client = new WebClient();
+    var sv = new NameValueCollection();
+    sv["masv"] = txtmasv.Text;
+    sv["hoten"] = txthoten.Text;
+    sv["diachi"] = txtdiachi.Text;
+    sv["dienthoai"] = txtdienthoai.Text;
+    /*sv["malop"] = txtmalop.Text;*/
+    sv["malop"] = cboLophoc.SelectedValue.ToString();
+    sv["anh"] = txtanh.Text;
+    var response = client.UploadValues(link, "PUT", sv);
+    String msg = Encoding.UTF8.GetString(response);
+    MessageBox.Show("Kết quả sửa: " + msg);
+    HienThi();
+}
+
+
+-------------- XÓA
+private void btnXoa_Click(object sender, EventArgs e)
+{
+    string str = string.Format("?masv={0}", txtmasv.Text);
+    string link = "http://localhost/truonghoc/api/default/delete" + str;
+    HttpWebRequest req = HttpWebRequest.CreateHttp(link);
+    req.Method = "DELETE";
+    HttpWebResponse response = (HttpWebResponse)req.GetResponse();
+    if (response.StatusCode == HttpStatusCode.OK)
+    {
+        MessageBox.Show("Đã xóa sinh viên có mã " + txtmasv.Text, "Thông báo");
+        HienThi();
+    }
+    else
+    {
+        MessageBox.Show("Có lỗi khi xóa sinh viên có mã " + txtmasv.Text, "Thông báo");
+    }
+
+}
+
+
+
+
+
+---------------- FIX
+Trường hợp báo lỗi: "Method not allowed" khi thực
+hiện chạy một số Web API thì:
+Thêm vào 6 dòng sau đây vào file Web.config
+<system.webServer>
+<validation validateIntegratedModeConfiguration="false"/>
+<modules runAllManagedModulesForAllRequests="true">
+<remove name="WebDAVModule"/> <!-- ADD THIS -->
+</modules>
+</system.webServer>

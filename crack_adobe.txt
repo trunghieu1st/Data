@@ -1,0 +1,145 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Net;
+using System.Runtime.Serialization.Json;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace Cau2
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+            Hienthi();
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Hienthi();
+        }
+        private void Hienthi()
+        {
+            string link = "http://localhost/apinhanvien/nhanvien/all";
+            HttpWebRequest hr = HttpWebRequest.CreateHttp(link);
+            WebResponse ws = hr.GetResponse();
+            DataContractJsonSerializer dt = new DataContractJsonSerializer(typeof(Nhanvien[]));
+            object data = dt.ReadObject(ws.GetResponseStream());
+            Nhanvien[] ds = (Nhanvien[])data;
+            dataGridView1.DataSource = ds;
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            string s = string.Format("?MaNv={0}",txt1.Text);
+            string link = "http://localhost/apinhanvien/nhanvien/id" +s;
+            HttpWebRequest hr = HttpWebRequest.CreateHttp(link);
+            WebResponse ws = hr.GetResponse();
+            DataContractJsonSerializer dt = new DataContractJsonSerializer(typeof(Nhanvien));
+            object data = dt.ReadObject(ws.GetResponseStream());
+            Nhanvien ds = (Nhanvien) data;
+            txt2.Text = ds.HoTen;
+            txt3.Text = ds.TrinhDo;
+            txt4.Text = ds.Luong.ToString();
+            dataGridView1.DataSource = data;
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            string link = "http://localhost/apinhanvien/nhanvien/update";
+            var client = new WebClient();
+            var sv = new NameValueCollection();
+            sv["MaNV"] = txt1.Text;
+            sv["HoTen"] = txt2.Text;
+            sv["TrinhDo"] = txt3.Text;
+            sv["Luong"] = txt4.Text;
+            var response = client.UploadValues(link, "PUT",sv);
+            string res = Encoding.UTF8.GetString(response);
+            MessageBox.Show("Ket qua them :" + res);
+            Hienthi();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            string link = "http://localhost/apinhanvien/nhanvien/create";
+            var client = new WebClient();
+            var sv = new NameValueCollection();
+            sv["MaNV"] = txt1.Text;
+            sv["HoTen"] = txt2.Text;
+            sv["TrinhDo"] = txt3.Text;
+            sv["Luong"] = txt4.Text;
+            var response = client.UploadValues(link,sv);
+            string res = Encoding.UTF8.GetString(response);
+            MessageBox.Show("Ket qua them :" + res);
+            Hienthi();
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            string s = string.Format("?MaNv={0}", txt1.Text);
+            string link = "http://localhost/apinhanvien/nhanvien/delete" + s;
+            HttpWebRequest hr = HttpWebRequest.CreateHttp(link);
+            hr.Method = "DELETE";
+            HttpWebResponse hwr = (HttpWebResponse)hr.GetResponse();
+            if(hwr.StatusCode == HttpStatusCode.OK)
+            {
+                MessageBox.Show("Ket qua xoa : thanh cong");
+                Hienthi();
+            }
+            else
+            {
+                MessageBox.Show("Ket qua xoa : that bai");
+                Hienthi();
+            }
+            
+        }
+    }
+}
+/*
+GlobalConfiguration.Configuration.Formatters.JsonFormatter.SerializerSettings.ReferenceLoopHandling
+                = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+            GlobalConfiguration.Configuration.Formatters.
+                Remove(GlobalConfiguration.Configuration.Formatters.XmlFormatter);
+*/
+
+/*
+"Method not allowed" => Web.config
+<system.webServer>
+<validation validateIntegratedModeConfiguration="false"/>
+<modules runAllManagedModulesForAllRequests="true">
+<remove name="WebDAVModule"/> <!-- ADD THIS -->
+</modules>
+</system.webServer>
+*/
